@@ -18,3 +18,4 @@ data_lake/gold/*
 
 *.sqlite3
 *.log
+
