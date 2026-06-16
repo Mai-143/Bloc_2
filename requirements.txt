@@ -18,3 +18,5 @@ pytest-django
 
 pyspark
 kafka-python
+
+pyarrow

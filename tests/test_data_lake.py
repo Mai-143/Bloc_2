@@ -1,8 +1,23 @@
 import os
 
 
-def test_data_lake_layers_exist():
+def test_project_directories_exist():
     expected_dirs = [
+        "api",
+        "scrapers",
+        "spark",
+        "kafka",
+        "warehouse",
+        "tests",
+    ]
+
+    for directory in expected_dirs:
+        assert os.path.isdir(directory), f"Dossier manquant : {directory}"
+
+
+def test_data_lake_base_structure_exists():
+    expected_dirs = [
+        "data_lake",
         "data_lake/raw",
         "data_lake/bronze",
         "data_lake/silver",
@@ -10,14 +25,16 @@ def test_data_lake_layers_exist():
     ]
 
     for directory in expected_dirs:
-        assert os.path.isdir(directory), f"Dossier manquant : {directory}"
+        assert os.path.isdir(directory), f"Dossier Data Lake manquant : {directory}"
 
 
-def test_bronze_files_exist():
+def test_main_project_files_exist():
     expected_files = [
-        "data_lake/bronze/adzuna_jobs.csv",
-        "data_lake/bronze/github_repositories.csv",
-        "data_lake/bronze/stackoverflow_survey.csv",
+        "Dockerfile",
+        "docker-compose.yml",
+        "requirements.txt",
+        "api/main.py",
+        "warehouse/schema.sql",
     ]
 
     for file_path in expected_files:
