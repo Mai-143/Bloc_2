@@ -5,6 +5,9 @@ python-dotenv
 psycopg2-binary
 SQLAlchemy
 
+fastapi
+uvicorn
+
 Django
 djangorestframework
 django-filter
@@ -12,3 +15,6 @@ drf-yasg
 
 pytest
 pytest-django
+
+pyspark
+kafka-python
