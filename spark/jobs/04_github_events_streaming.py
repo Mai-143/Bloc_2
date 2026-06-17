@@ -6,7 +6,7 @@ spark = SparkSession.builder \
     .appName("GitHubEventsStreaming") \
     .config(
         "spark.jars.packages",
-        "org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.0"
+        "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.3"
     ) \
     .getOrCreate()
 

@@ -16,7 +16,7 @@ drf-yasg
 pytest
 pytest-django
 
-pyspark
+pyspark==3.5.3
 kafka-python
 
 pyarrow
