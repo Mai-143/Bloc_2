@@ -1,97 +1,97 @@
 DROP TABLE IF EXISTS fact_jobs;
-DROP TABLE IF EXISTS jobs_source_stats;
-DROP TABLE IF EXISTS jobs_location_stats;
-DROP TABLE IF EXISTS github_language_stats;
-DROP TABLE IF EXISTS stackoverflow_country_stats;
-DROP TABLE IF EXISTS stackoverflow_skills_stats;
-DROP TABLE IF EXISTS stackoverflow_profile_stats;
+DROP TABLE IF EXISTS dim_company;
+DROP TABLE IF EXISTS dim_location;
+DROP TABLE IF EXISTS dim_source;
+DROP TABLE IF EXISTS dim_category;
+
+DROP TABLE IF EXISTS gold_jobs_by_location;
+DROP TABLE IF EXISTS gold_salary_by_category;
+DROP TABLE IF EXISTS gold_github_language_popularity;
+DROP TABLE IF EXISTS gold_developer_salary_by_country;
+
 DROP TABLE IF EXISTS github_events_stream;
 DROP TABLE IF EXISTS github_event_type_stats;
 DROP TABLE IF EXISTS github_repo_activity;
 
+
+CREATE TABLE dim_company (
+    company_id SERIAL PRIMARY KEY,
+    company_name TEXT UNIQUE
+);
+
+CREATE TABLE dim_location (
+    location_id SERIAL PRIMARY KEY,
+    location_name TEXT UNIQUE
+);
+
+CREATE TABLE dim_source (
+    source_id SERIAL PRIMARY KEY,
+    source_name TEXT UNIQUE
+);
+
+CREATE TABLE dim_category (
+    category_id SERIAL PRIMARY KEY,
+    category_name TEXT UNIQUE
+);
+
 CREATE TABLE fact_jobs (
-    id SERIAL PRIMARY KEY,
-    job_id TEXT,
-    title TEXT,
-    company TEXT,
-    location TEXT,
-    category TEXT,
-    description TEXT,
+    job_id SERIAL PRIMARY KEY,
+    job_title TEXT,
+    company_id INTEGER REFERENCES dim_company(company_id),
+    location_id INTEGER REFERENCES dim_location(location_id),
+    source_id INTEGER REFERENCES dim_source(source_id),
+    category_id INTEGER REFERENCES dim_category(category_id),
+    salary_min DOUBLE PRECISION,
+    salary_max DOUBLE PRECISION,
     contract_type TEXT,
-    redirect_url TEXT,
-    created_at TEXT,
-    salary_min NUMERIC,
-    salary_max NUMERIC,
-    source TEXT,
-    collection_date TEXT,
-    skills TEXT,
-    rating NUMERIC,
-    salary_estimate TEXT
+    contract_time TEXT,
+    created_at TEXT
 );
 
-CREATE TABLE jobs_source_stats (
-    source TEXT PRIMARY KEY,
-    jobs_count INTEGER,
-    avg_salary_min NUMERIC,
-    avg_salary_max NUMERIC,
-    avg_rating NUMERIC
+
+CREATE TABLE gold_jobs_by_location (
+    location TEXT,
+    job_count INTEGER
 );
 
-CREATE TABLE jobs_location_stats (
-    location TEXT PRIMARY KEY,
-    jobs_count INTEGER,
-    avg_salary_min NUMERIC,
-    avg_salary_max NUMERIC
+CREATE TABLE gold_salary_by_category (
+    category TEXT,
+    job_count INTEGER,
+    avg_salary_min DOUBLE PRECISION,
+    avg_salary_max DOUBLE PRECISION,
+    min_salary DOUBLE PRECISION,
+    max_salary DOUBLE PRECISION
 );
 
-CREATE TABLE github_language_stats (
-    language TEXT PRIMARY KEY,
-    repositories_count INTEGER,
-    total_stars INTEGER,
-    avg_stars NUMERIC,
-    total_forks INTEGER,
-    total_open_issues INTEGER
+CREATE TABLE gold_github_language_popularity (
+    language TEXT,
+    repo_count INTEGER,
+    avg_stars DOUBLE PRECISION,
+    max_stars INTEGER
 );
 
-CREATE TABLE stackoverflow_country_stats (
-    country TEXT PRIMARY KEY,
-    respondents_count INTEGER,
-    avg_years_code NUMERIC,
-    avg_years_code_pro NUMERIC,
-    avg_salary_yearly_usd NUMERIC
+CREATE TABLE gold_developer_salary_by_country (
+    country TEXT,
+    developer_count INTEGER,
+    avg_salary_yearly DOUBLE PRECISION
 );
 
-CREATE TABLE stackoverflow_skills_stats (
-    skill_category TEXT,
-    skill_name TEXT,
-    respondents_count INTEGER
-);
-
-CREATE TABLE stackoverflow_profile_stats (
-    employment TEXT,
-    remote_work TEXT,
-    respondents_count INTEGER,
-    avg_salary_yearly_usd NUMERIC,
-    avg_years_code_pro NUMERIC
-);
 
 CREATE TABLE github_events_stream (
-    event_id TEXT PRIMARY KEY,
+    event_id TEXT,
     event_type TEXT,
     repo_name TEXT,
     actor_login TEXT,
     created_at TEXT,
-    collected_at TEXT,
-    processed_at TEXT
+    source TEXT
 );
 
 CREATE TABLE github_event_type_stats (
-    event_type TEXT PRIMARY KEY,
-    events_count INTEGER
+    event_type TEXT,
+    event_count INTEGER
 );
 
 CREATE TABLE github_repo_activity (
-    repo_name TEXT PRIMARY KEY,
-    events_count INTEGER,
-    last_event_at TEXT
+    repo_name TEXT,
+    event_count INTEGER
 );

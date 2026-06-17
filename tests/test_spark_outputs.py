@@ -4,13 +4,11 @@ import pytest
 
 def test_spark_scripts_exist():
     expected_scripts = [
-        "spark/adzuna_bronze_to_silver.py",
-        "spark/adzuna_silver_to_gold.py",
-        "spark/git_bronze_to_silver.py",
-        "spark/git_silver_to_gold.py",
-        "spark/stackoverflow_bronze_to_silver.py",
-        "spark/stackoverflow_silver_to_gold.py",
-        "spark/github_events_streaming.py",
+        "spark/jobs/01_bronze_to_silver.py",
+        "spark/jobs/02_silver_to_gold.py",
+        "spark/jobs/03_load_to_postgres.py",
+        "spark/jobs/04_github_events_streaming.py",
+ 
     ]
 
     for script in expected_scripts:
@@ -28,13 +26,14 @@ def test_kafka_scripts_exist():
 
 def test_generated_outputs_if_present():
     expected_dirs = [
-        "data_lake/silver/adzuna_jobs_clean",
-        "data_lake/silver/github_clean",
-        "data_lake/silver/stackoverflow_clean",
+        "data_lake/silver/jobs",
+        "data_lake/silver/github",
+        "data_lake/silver/stackoverflow",
         "data_lake/silver/streaming_github_events",
         "data_lake/gold/jobs_by_location",
-        "data_lake/gold/github_top_languages",
-        "data_lake/gold/stackoverflow_developers_by_country",
+        "data_lake/gold/github_language_popularity",
+        "data_lake/gold/developer_salary_by_country",
+        "data_lake/gold/salary_by_category",
     ]
 
     existing_dirs = [directory for directory in expected_dirs if os.path.isdir(directory)]

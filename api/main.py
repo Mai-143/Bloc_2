@@ -1,122 +1,150 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 import pandas as pd
 from sqlalchemy import create_engine
 import numpy as np
 
 app = FastAPI(
     title="JobTech Data Lake API",
-    description="API pour exposer les données du Data Warehouse JobTech",
+    description="API exposant les données analytiques du Data Lake JobTech",
     version="1.0.0"
 )
 
-DB_USER = "jobtech_user"
-DB_PASSWORD = "jobtech_pass"
-DB_HOST = "postgres"
-DB_PORT = "5432"
-DB_NAME = "jobtech"
-
 engine = create_engine(
-    f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    "postgresql+psycopg2://jobtech_user:jobtech_pass@postgres:5432/jobtech"
 )
 
-def clean_records(df):
+
+def records(query: str):
+    df = pd.read_sql(query, engine)
     df = df.replace({np.nan: None})
     return df.to_dict(orient="records")
 
+
 @app.get("/")
-def home():
-    return {"message": "JobTech API is running"}
+def healthcheck():
+    return {
+        "status": "running",
+        "project": "JobTech Data Lake",
+        "layers": ["bronze", "silver", "gold", "warehouse"]
+    }
+
 
 @app.get("/jobs")
-def get_jobs(limit: int = 10):
-    query = """
-        SELECT job_id, title, company, location, salary_min, salary_max, source
-        FROM fact_jobs
-        LIMIT %(limit)s
-    """
-    df = pd.read_sql(query, engine, params={"limit": limit})
-    return clean_records(df)
-
-@app.get("/jobs/top-locations")
-def get_top_locations(limit: int = 10):
-    query = """
-        SELECT location, jobs_count, avg_salary_min, avg_salary_max
-        FROM jobs_location_stats
-        ORDER BY jobs_count DESC
-        LIMIT %(limit)s
-    """
-    df = pd.read_sql(query, engine, params={"limit": limit})
-    return clean_records(df)
-
-@app.get("/jobs/sources")
-def get_sources():
-    query = """
-        SELECT source, jobs_count, avg_salary_min, avg_salary_max, avg_rating
-        FROM jobs_source_stats
-        ORDER BY jobs_count DESC
-    """
-    df = pd.read_sql(query, engine)
-    return clean_records(df)
-
-@app.get("/github/languages")
-def get_github_languages():
-    query = """
-        SELECT language, repositories_count, total_stars, avg_stars
-        FROM github_language_stats
-        ORDER BY total_stars DESC
-    """
-    df = pd.read_sql(query, engine)
-    return clean_records(df)
-
-@app.get("/stackoverflow/top-skills")
-def get_stackoverflow_skills(limit: int = 20):
-    query = f"""
-        SELECT skill_category, skill_name, respondents_count
-        FROM stackoverflow_skills_stats
-        ORDER BY respondents_count DESC
+def get_jobs(limit: int = Query(10, ge=1, le=100)):
+    return records(f"""
+        SELECT
+            f.job_id,
+            f.job_title,
+            c.company_name AS company,
+            l.location_name AS location,
+            s.source_name AS source,
+            cat.category_name AS category,
+            f.salary_min,
+            f.salary_max,
+            f.contract_type,
+            f.contract_time,
+            f.created_at
+        FROM fact_jobs f
+        LEFT JOIN dim_company c ON f.company_id = c.company_id
+        LEFT JOIN dim_location l ON f.location_id = l.location_id
+        LEFT JOIN dim_source s ON f.source_id = s.source_id
+        LEFT JOIN dim_category cat ON f.category_id = cat.category_id
         LIMIT {limit}
-    """
-    df = pd.read_sql(query, engine)
-    return clean_records(df)
+    """)
 
-@app.get("/stackoverflow/countries")
-def get_stackoverflow_countries(limit: int = 10):
-    query = f"""
-        SELECT country, respondents_count, avg_salary_yearly_usd
-        FROM stackoverflow_country_stats
-        ORDER BY respondents_count DESC
-        LIMIT {limit}
-    """
-    df = pd.read_sql(query, engine)
-    return clean_records(df)
+
+@app.get("/analytics/jobs-by-location")
+def jobs_by_location():
+    return records("""
+        SELECT *
+        FROM gold_jobs_by_location
+        ORDER BY job_count DESC
+    """)
+
+
+@app.get("/analytics/salary-by-category")
+def salary_by_category():
+    return records("""
+        SELECT *
+        FROM gold_salary_by_category
+        ORDER BY job_count DESC
+    """)
+
+
+@app.get("/analytics/github-languages")
+def github_languages():
+    return records("""
+        SELECT *
+        FROM gold_github_language_popularity
+        ORDER BY repo_count DESC
+    """)
+
+
+@app.get("/analytics/developer-salary-by-country")
+def developer_salary_by_country():
+    return records("""
+        SELECT *
+        FROM gold_developer_salary_by_country
+        ORDER BY developer_count DESC
+    """)
 
 @app.get("/streaming/github/events")
-def get_github_events(limit: int = 20):
-    query = f"""
-        SELECT event_id, event_type, repo_name, actor_login, created_at, collected_at, processed_at
+def github_streaming_events():
+    return records("""
+        SELECT *
         FROM github_events_stream
-        ORDER BY created_at DESC
-        LIMIT {limit}
-    """
-    return clean_records(pd.read_sql(query, engine))
+        LIMIT 100
+    """)
 
 
 @app.get("/streaming/github/event-types")
-def get_github_event_types():
-    query = """
-        SELECT event_type, events_count
+def github_event_types():
+    return records("""
+        SELECT *
         FROM github_event_type_stats
-        ORDER BY events_count DESC
-    """
-    return clean_records(pd.read_sql(query, engine))
+        ORDER BY event_count DESC
+    """)
 
 
 @app.get("/streaming/github/repos")
-def get_github_repo_activity(limit: int = 20):
-    query = f"""
-        SELECT repo_name, events_count, last_event_at
+def github_repo_activity():
+    return records("""
+        SELECT *
         FROM github_repo_activity
-        ORDER BY events_count DESC
-        LIMIT {limit}
-    """
-    return clean_records(pd.read_sql(query, engine))
+        ORDER BY event_count DESC
+    """)
+
+@app.get("/warehouse/companies")
+def get_companies():
+    return records("""
+        SELECT *
+        FROM dim_company
+        ORDER BY company_name
+    """)
+
+
+@app.get("/warehouse/locations")
+def get_locations():
+    return records("""
+        SELECT *
+        FROM dim_location
+        ORDER BY location_name
+    """)
+
+
+@app.get("/warehouse/sources")
+def get_sources():
+    return records("""
+        SELECT *
+        FROM dim_source
+        ORDER BY source_name
+    """)
+
+
+@app.get("/warehouse/categories")
+def get_categories():
+    return records("""
+        SELECT *
+        FROM dim_category
+        ORDER BY category_name
+    """)

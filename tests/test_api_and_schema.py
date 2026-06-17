@@ -12,6 +12,10 @@ def test_api_file_contains_required_routes():
     expected_routes = [
         "/",
         "/jobs",
+        "/analytics/jobs-by-location",
+        "/analytics/salary-by-category",
+        "/analytics/github-languages",
+        "/analytics/developer-salary-by-country",
         "/streaming/github/events",
         "/streaming/github/event-types",
         "/streaming/github/repos",
@@ -26,6 +30,10 @@ def test_schema_contains_required_tables():
 
     expected_tables = [
         "fact_jobs",
+        "gold_jobs_by_location",
+        "gold_salary_by_category",
+        "gold_github_language_popularity",
+        "gold_developer_salary_by_country",
         "github_events_stream",
         "github_event_type_stats",
         "github_repo_activity",
@@ -52,4 +60,23 @@ def test_requirements_contains_required_packages():
     ]
 
     for package in expected_packages:
-        assert package in content, f"Package manquant dans requirements.txt : {package}"
+        assert package in content, (
+            f"Package manquant dans requirements.txt : {package}"
+        )
+
+
+def test_project_directories_exist():
+    expected_dirs = [
+        "api",
+        "spark",
+        "warehouse",
+        "data_lake/bronze",
+        "data_lake/silver",
+        "data_lake/gold",
+        "tests",
+    ]
+
+    for directory in expected_dirs:
+        assert os.path.isdir(directory), (
+            f"Dossier manquant : {directory}"
+        )
