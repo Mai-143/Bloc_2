@@ -1,9 +1,8 @@
 from pyspark.sql.functions import col, trim, lower, lit, expr
 from spark.common.spark_session import get_spark_session
-
+import pandas as pd
 
 spark = get_spark_session("JobTech Bronze to Silver")
-
 
 # =========================
 # ADZUNA JOBS
